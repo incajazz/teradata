@@ -1,0 +1,20 @@
+UPDATE TGT
+FROM DB.TABLETGT TGT,
+    (SELECT  T1.Date_Dt,T1.Cod_Type, T1.Nro_Doc, T1.Cod_Seg 
+    ,T1.Nom_Seg ,T1.Cod_Sub_Seg ,T1.Nom_Sub_Seg,T2.Cod_Ubigeo 
+        
+    FROM DB.TABLE1 T1 
+    LEFT JOIN DB.TABLE2 T2  ON T1.Nro_Doc = T2.NroDoc 
+    AND T1.Cod_Type = T2.CodTipIden
+    WHERE T1.Date_Dt =   '2021-04-30'
+    QUALIFY ROW_NUMBER() OVER(PARTITION BY T1.Date_Dt,T1.Cod_Type, T1.Nro_Doc
+        ORDER BY T1.Date_Dt,T1.Cod_Type, T1.Nro_Doc, T1.Cod_Seg) = 1   
+    ) SRC
+SET  Cod_Seg = SRC.Cod_Seg
+    ,Nom_Seg = SRC.Nom_Seg 
+    ,Cod_Sub_Seg = SRC.Cod_Sub_Seg
+    ,Nom_Sub_Seg = SRC.Nom_Sub_Seg
+    ,Cod_Ubigeo = SRC.Cod_Ubigeo 
+WHERE TGT.Nro_Doc =SRC.Nro_Doc 
+AND TGT.Cod_Type = SRC.Cod_Type
+AND TGT.Date_Dt =  '2021-04-30';
