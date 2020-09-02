@@ -1,0 +1,64 @@
+/********************************************************
+* Script Name - loadjb
+* Usage: tbuild -f importjob
+* Need to install TPT Access Module for S3
+* Reads the file in S3: test_export_s3.txt.gz
+*********************************************************/
+USING CHARACTER SET UTF8
+DEFINE JOB importjob
+DESCRIPTION 'Import data to TD from S3'
+(
+
+DEFINE SCHEMA FILE_SCHEMA   
+(
+AS_OF_DATE VARCHAR(100),
+COMPANY_ID VARCHAR(100),
+COMPANY_NAME VARCHAR(100),
+CONTRIBUTION_VALUE VARCHAR(100)
+);  
+
+DEFINE OPERATOR PRODUCER_FILE 
+TYPE DATACONNECTOR PRODUCER 
+SCHEMA FILE_SCHEMA 
+ATTRIBUTES 
+(  
+  VARCHAR Format = 'Delimited',
+  VARCHAR TextDelimiter  = '|',
+  VARCHAR OpenMode = 'Read', 
+  VARCHAR PrivateLogName   = 'FILE_READER_LOG',
+  VARCHAR AccessModuleName = 'libs3axsmod.dll',
+  VARCHAR AccessModuleInitStr = 'S3ConfigDir=C:\aws S3Bucket=YOUR_BUCKET_NAME S3Object=test_export_s3.txt.*  S3SinglePartFile=True'
+); 
+
+DEFINE OPERATOR CONSUMER_TABLE 
+TYPE LOAD 
+SCHEMA *
+ATTRIBUTES  
+(
+  VARCHAR PrivateLogName = 'selector_log',  
+  VARCHAR TdpId = '127.0.0.1', 
+  VARCHAR UserName = 'USER_TD',  
+  VARCHAR UserPassword = 'PASS_4_USER_TD', 
+  VARCHAR TargetDataBase = 'DB',
+  VARCHAR TargetTable = 'TABLE'
+);  
+
+APPLY (
+'INSERT INTO DB.TABLE(
+AS_OF_DATE,
+COMPANY_ID,
+COMPANY_NAME,
+CONTRIBUTION_VALUE
+)
+VALUES(
+:AS_OF_DATE,
+:COMPANY_ID,
+:COMPANY_NAME,
+:CONTRIBUTION_VALUE
+);'
+)
+TO OPERATOR (CONSUMER_TABLE)
+SELECT * FROM OPERATOR (PRODUCER_FILE);
+
+);
+

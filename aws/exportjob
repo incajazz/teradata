@@ -1,0 +1,50 @@
+/********************************************************
+* Script Name - exportjob
+* Usage: tbuild -f exportjob
+* Need to install TPT Access Module for S3
+* Stores the file, in S3, gzip compressed: test_export_s3.txt.gz
+*********************************************************/
+USING CHARACTER SET UTF8
+DEFINE JOB exportjob
+DESCRIPTION 'Export data from TD OnPrem to AWS S3'
+(
+
+DEFINE SCHEMA FILE_SCHEMA
+(
+ AS_OF_DATE VARCHAR(100)
+,COMPANY_ID VARCHAR(100)
+,COMPANY_NAME VARCHAR(100)
+,CONTRIBUTION_VALUE VARCHAR(100)
+);
+
+DEFINE OPERATOR SELECT_SQL 
+TYPE SELECTOR 
+SCHEMA FILE_SCHEMA
+ATTRIBUTES  
+(
+  VARCHAR PrivateLogName = 'selector_log',  
+  VARCHAR TdpId = '127.0.0.1', 
+  VARCHAR UserName = 'USER_TD',  
+  VARCHAR UserPassword = 'PASS_4_USER_TD', 
+  VARCHAR SelectStmt = 'SELECT * FROM TABLE;'  
+);  
+
+DEFINE OPERATOR FILE_WRITER 
+TYPE DATACONNECTOR CONSUMER 
+SCHEMA *  
+ATTRIBUTES  
+(  
+  VARCHAR PrivateLogName = 'exports3_log', 
+  VARCHAR FileName = 'test_export_s3.txt.gz',
+  VARCHAR Format = 'delimited',
+  VARCHAR TextDelimiter  = '|',
+  VARCHAR OpenMode = 'Write',
+  VARCHAR AccessModuleName = 'libs3axsmod.dll',
+  VARCHAR AccessModuleInitStr = 'S3Bucket=YOUR_BUCKET_NAME S3SinglePartFile=True S3ConfigDir=C:\aws S3Object=test_export_s3.txt.gz'
+); 
+
+APPLY TO OPERATOR (FILE_WRITER)
+SELECT * FROM OPERATOR (SELECT_SQL);  
+
+);
+
