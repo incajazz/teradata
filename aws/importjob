@@ -2,7 +2,7 @@
 * Script Name - loadjb
 * Usage: tbuild -f importjob
 * Need to install TPT Access Module for S3
-* Reads the file in S3: test_export_s3.txt.gz
+* Reads the file from S3: test_export_s3.txt.gz
 *********************************************************/
 USING CHARACTER SET UTF8
 DEFINE JOB importjob
